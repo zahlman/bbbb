@@ -1,0 +1,14 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# gVim
+*.swp
+*~
+
+# pip
+*.egg-info
+
+# build
+build/
+dist/

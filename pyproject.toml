@@ -1,0 +1,20 @@
+[project]
+name = "bbbb"
+version = "0.1.0"
+description = "a Bare-Bones Build Backend (for Python packaging)"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Programming Language :: Python :: 3"
+]
+dependencies = [ ]
+license = {file = "LICENSE.txt"}
+
+[[project.authors]]
+name = "Karl Knechtel"
+email = "zahlman@proton.me"
+
+[project.urls]
+bugs = "https://github.com/zahlman/bbbb/issues"
+changelog = "https://github.com/zahlman/bbbb/blob/master/changelog.md"
+homepage = "https://github.com/zahlman/bbbb"
