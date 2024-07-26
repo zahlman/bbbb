@@ -1,6 +1,6 @@
 from os import walk # Path doesn't have .walk until 3.12
 from pathlib import Path
-import tarfile
+from tarfile import open as TarFile, PAX_FORMAT, TarInfo
 from zipfile import ZipFile, ZIP_DEFLATED
 
 
@@ -22,12 +22,12 @@ def build_sdist(sdist_directory, config_settings):
     # Make an sdist and return both the Python object and its filename
     name = f"{NAME}-{VERSION}.tar.gz"
     sdist_path = Path(sdist_directory) / name
-    sdist = tarfile.open(sdist_path, "w:gz", format=tarfile.PAX_FORMAT)
-    # Tar up the whole directory, minus hidden and special files
-    sdist.add(
-        Path('.').resolve(), arcname=f'{NAME}-{VERSION}',
-        filter=_exclude_hidden_and_special_files
-    )
+    with TarFile(sdist_path, "w:gz", format=PAX_FORMAT) as sdist:
+        # Tar up the whole directory, minus hidden and special files
+        sdist.add(
+            Path('.').resolve(), arcname=f'{NAME}-{VERSION}',
+            filter=_exclude_hidden_and_special_files
+        )
     return name
 
 
