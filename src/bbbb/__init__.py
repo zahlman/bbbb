@@ -4,9 +4,11 @@ import tarfile
 from zipfile import ZipFile, ZIP_DEFLATED
 
 
-SDIST_NAME = "bbbb-0.1.0"
-SDIST_FILENAME = SDIST_NAME + ".tar.gz"
-WHEEL_FILENAME = "bbbb-0.1.0-py3-none-any.whl"
+NAME = 'bbbb'
+VERSION = '0.1.0'
+PYTHON_TAG = 'py3'
+ABI_TAG = 'none'
+PLATFORM_TAG = 'any'
 
 
 def _exclude_hidden_and_special_files(archive_entry):
@@ -16,29 +18,38 @@ def _exclude_hidden_and_special_files(archive_entry):
             return archive_entry
 
 
-def _make_sdist(sdist_dir):
+def build_sdist(sdist_directory, config_settings):
+    """Create an sdist (implements hook defined in PEP 517).
+
+    sdist_directory -> where the sdist (.tar.gz archive) will be placed.
+    config_settings -> info from pyproject.toml, provided by the frontend.
+
+    Returns the name of the created file."""
     # Make an sdist and return both the Python object and its filename
-    sdist_path = Path(sdist_dir) / SDIST_FILENAME
+    name = f"{NAME}-{VERSION}.tar.gz"
+    sdist_path = Path(sdist_directory) / name
     sdist = tarfile.open(sdist_path, "w:gz", format=tarfile.PAX_FORMAT)
     # Tar up the whole directory, minus hidden and special files
     sdist.add(
-        Path('.').resolve(), arcname=SDIST_NAME,
+        Path('.').resolve(), arcname=f'{NAME}-{VERSION}',
         filter=_exclude_hidden_and_special_files
     )
-    return sdist, SDIST_FILENAME
-
-
-def build_sdist(sdist_dir, config_settings):
-    """PEP 517 sdist creation hook"""
-    sdist, sdist_filename = _make_sdist(sdist_dir)
-    return sdist_filename
+    return name
 
 
 def build_wheel(
     wheel_directory, metadata_directory=None, config_settings=None
 ):
-    """PEP 517 wheel creation hook"""
-    wheel_path = Path(wheel_directory) / WHEEL_FILENAME
+    """Create a wheel (implements hook defined in PEP 517).
+
+    wheel_directory -> where the wheel (zip archive) will be placed.
+    metadata_directory -> ignored.
+    (`prepare_metadata_for_build_wheel` not implemented.)
+    config_settings -> info from pyproject.oml, provided by the frontend.
+
+    Returns the name of the created file."""
+    wheel_name = f"{NAME}-{VERSION}-{PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}.whl"
+    wheel_path = Path(wheel_directory) / wheel_name
     # Assume src layout and that metadata has already been created therein.
     to_include = Path('src')
     # shutil.make_archive would suffice, but in the long run we'll
@@ -50,4 +61,4 @@ def build_wheel(
             for file in files:
                 path /= file
                 wheel.write(path, arcname=path.relative_to(to_include))
-    return WHEEL_FILENAME
+    return wheel_name
