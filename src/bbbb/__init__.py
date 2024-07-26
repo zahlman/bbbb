@@ -1,3 +1,4 @@
+from io import BytesIO
 from os import walk # Path doesn't have .walk until 3.12
 from pathlib import Path
 from tarfile import open as TarFile, PAX_FORMAT, TarInfo
@@ -9,6 +10,10 @@ VERSION = '0.1.0'
 PYTHON_TAG = 'py3'
 ABI_TAG = 'none'
 PLATFORM_TAG = 'any'
+# According to the specifications on packaging.python.org, for a
+# pyproject.toml-based sdist, we must conform to version 2.2 or later.
+# So we will specify version 2.2 even though we are only using basic features.
+METADATA = f"Metadata-Version: 2.2\nName: {NAME}\nVersion: {VERSION}"
 
 
 def _exclude_hidden_and_special_files(archive_entry):
@@ -28,6 +33,11 @@ def build_sdist(sdist_directory, config_settings):
             Path('.').resolve(), arcname=f'{NAME}-{VERSION}',
             filter=_exclude_hidden_and_special_files
         )
+        # Create (or overwrite) metadata file (directly into archive).
+        info = TarInfo(f'{NAME}-{VERSION}/PKG-INFO')
+        data = METADATA.encode()
+        info.size = len(data)
+        sdist.addfile(info, BytesIO(data))
     return name
 
 
