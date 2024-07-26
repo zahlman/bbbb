@@ -32,7 +32,12 @@ def build_sdist(sdist_directory, config_settings):
 
 
 def build_wheel(
-    wheel_directory, metadata_directory=None, config_settings=None
+    # This is the order specified in PEP 517, subsection "Mandatory hooks".
+    # The example build backend in Appendix A reverses the order of
+    # `config_settings` and `metadata_directory`. However, this does not
+    # actually work with standard tooling, because `pyproject_hooks` passes
+    # these arguments positionally and in this specific order.
+    wheel_directory, config_settings=None, metadata_directory=None
 ):
     wheel_name = f"{NAME}-{VERSION}-{PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}.whl"
     wheel_path = Path(wheel_directory) / wheel_name
