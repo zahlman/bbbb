@@ -44,6 +44,20 @@ def build_sdist(sdist_directory, config_settings):
     return name
 
 
+def _add_file_to_wheel(wheel, src_path, dst_path):
+    wheel.write(src_path, arcname=dst_path)
+    return '' # TODO
+
+
+def _record_entries(wheel, src_prefix, dst_prefix):
+    for path, folders, files in walk(src_prefix):
+        path = Path(path)
+        for file in files:
+            src = path / file
+            dst = dst_prefix / src.relative_to(src_prefix)
+            yield _add_file_to_wheel(wheel, src, dst)
+
+
 def build_wheel(
     # This is the order specified in PEP 517, subsection "Mandatory hooks".
     # The example build backend in Appendix A reverses the order of
@@ -54,17 +68,8 @@ def build_wheel(
 ):
     wheel_name = f'{NAME}-{VERSION}-{PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}.whl'
     wheel_path = Path(wheel_directory) / wheel_name
-    # Assume src layout and that metadata has already been created therein.
-    to_include = Path('src')
-    # shutil.make_archive would suffice, but in the long run we'll
-    # want custom features: sorting to put the `.dist-info` folder at
-    # the end of the archive, and the ability to override timestamps.
     with ZipFile(wheel_path, 'w', compression=ZIP_DEFLATED) as wheel:
-        for path, folders, files in walk(to_include):
-            path = Path(path)
-            for file in files:
-                file = path / file
-                wheel.write(file, arcname=file.relative_to(to_include))
+        record = ''.join(_record_entries(wheel, Path('src'), Path('.')))
         # Generate the .dist-info folder.
         di = Path(f'{NAME}-{VERSION}.dist-info')
         wheel.writestr(str(di / 'METADATA'), METADATA)
