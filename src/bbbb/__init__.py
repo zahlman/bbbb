@@ -1,3 +1,5 @@
+from base64 import urlsafe_b64encode
+from hashlib import sha256
 from io import BytesIO
 from os import walk # Path doesn't have .walk until 3.12
 from pathlib import Path
@@ -44,9 +46,26 @@ def build_sdist(sdist_directory, config_settings):
     return name
 
 
+def _to_base64_for_record(data):
+    return urlsafe_b64encode(data).decode('ascii').rstrip('=')
+
+
+def _sha256_digest(f):
+    hasher = sha256()
+    # Somewhat arbitrary page size.
+    # Avoid reading entire files into memory simultaneously
+    # (although it shouldn't normally cause a problem).
+    for chunk in iter(lambda: f.read(4096), b''):
+        hasher.update(chunk)
+    return hasher.digest()
+
+
 def _add_file_to_wheel(wheel, src_path, dst_path):
     wheel.write(src_path, arcname=dst_path)
-    return '' # TODO
+    size = src_path.stat().st_size
+    with open(src_path, 'rb') as f:
+        checksum = _to_base64_for_record(_sha256_digest(f))
+    return f'{dst_path},sha256={checksum},{size}\n'
 
 
 def _record_entries(wheel, src_prefix, dst_prefix):
@@ -74,6 +93,7 @@ def build_wheel(
         di = Path(f'{NAME}-{VERSION}.dist-info')
         wheel.writestr(str(di / 'METADATA'), METADATA)
         wheel.writestr(str(di / 'WHEEL'), WHEEL)
-        # TODO: RECORD, entry_points.txt
+        wheel.writestr(str(di / 'RECORD'), record)
+        # TODO: entry_points.txt
         wheel.write('LICENSE', arcname=di / 'LICENSE')
     return wheel_name
