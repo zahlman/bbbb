@@ -63,8 +63,8 @@ def build_wheel(
         for path, folders, files in walk(to_include):
             path = Path(path)
             for file in files:
-                path /= file
-                wheel.write(path, arcname=path.relative_to(to_include))
+                file = path / file
+                wheel.write(file, arcname=file.relative_to(to_include))
         # Generate the .dist-info folder.
         di = Path(f'{NAME}-{VERSION}.dist-info')
         wheel.writestr(str(di / 'METADATA'), METADATA)
