@@ -19,12 +19,6 @@ def _exclude_hidden_and_special_files(archive_entry):
 
 
 def build_sdist(sdist_directory, config_settings):
-    """Create an sdist (implements hook defined in PEP 517).
-
-    sdist_directory -> where the sdist (.tar.gz archive) will be placed.
-    config_settings -> info from pyproject.toml, provided by the frontend.
-
-    Returns the name of the created file."""
     # Make an sdist and return both the Python object and its filename
     name = f"{NAME}-{VERSION}.tar.gz"
     sdist_path = Path(sdist_directory) / name
@@ -40,14 +34,6 @@ def build_sdist(sdist_directory, config_settings):
 def build_wheel(
     wheel_directory, metadata_directory=None, config_settings=None
 ):
-    """Create a wheel (implements hook defined in PEP 517).
-
-    wheel_directory -> where the wheel (zip archive) will be placed.
-    metadata_directory -> ignored.
-    (`prepare_metadata_for_build_wheel` not implemented.)
-    config_settings -> info from pyproject.oml, provided by the frontend.
-
-    Returns the name of the created file."""
     wheel_name = f"{NAME}-{VERSION}-{PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}.whl"
     wheel_path = Path(wheel_directory) / wheel_name
     # Assume src layout and that metadata has already been created therein.
