@@ -7,7 +7,7 @@ classifiers = [
     "Development Status :: 1 - Planning",
     "Programming Language :: Python :: 3"
 ]
-dependencies = [ ]
+dependencies = []
 license = {file = "LICENSE.txt"}
 
 [[project.authors]]
@@ -18,3 +18,8 @@ email = "zahlman@proton.me"
 bugs = "https://github.com/zahlman/bbbb/issues"
 changelog = "https://github.com/zahlman/bbbb/blob/master/changelog.md"
 homepage = "https://github.com/zahlman/bbbb"
+
+[build-system]
+requires = []
+build-backend = "bbbb"
+backend-path = ["src"]
