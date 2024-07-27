@@ -7,6 +7,18 @@ from tarfile import open as TarFile, PAX_FORMAT, TarInfo
 from zipfile import ZipFile, ZIP_DEFLATED
 
 
+def _get_config():
+    # Can't import at the start, because of the need to bootstrap the
+    # environment via `get_requires_for_build_*`.
+    try:
+        from tomllib import load as load_toml # requires 3.11+
+    except ImportError: # 3.10 or earlier, so not in the standard library
+        from tomli import load as load_toml # third-party implementation.
+    # No validation is attempted; that's the job of a frontend or integrator.
+    with open('pyproject.toml', 'rb') as f:
+        return load_toml(f) # let errors propagate
+
+
 NAME = 'bbbb'
 VERSION = '0.1.0'
 PYTHON_TAG = 'py3'
@@ -21,6 +33,10 @@ WHEEL = f'Wheel-Version: 1.0\nGenerator: bbbb 0.1.0\nRoot-Is-Purelib: true\nTag:
 # Also should support making entry_points.txt.
 
 
+def get_requires_for_build_sdist(config_settings=None):
+    return ['tomli;python_version<"3.11"']
+
+
 def _exclude_hidden_and_special_files(archive_entry):
     # Tarfile filter to exclude hidden and special files from the archive
     if archive_entry.isfile() or archive_entry.isdir():
@@ -29,6 +45,7 @@ def _exclude_hidden_and_special_files(archive_entry):
 
 
 def build_sdist(sdist_directory, config_settings=None):
+    _get_config()
     # Make an sdist and return both the Python object and its filename
     name = f'{NAME}-{VERSION}.tar.gz'
     sdist_path = Path(sdist_directory) / name
@@ -85,6 +102,10 @@ def _add_folder_to_wheel(wheel, records, dst_prefix, src_prefix):
             _add_file_to_wheel(wheel, records, dst, src)
 
 
+def get_requires_for_build_wheel(config_settings=None):
+    return ['tomli;python_version<"3.11"']
+
+
 def build_wheel(
     # This is the order specified in PEP 517, subsection 'Mandatory hooks'.
     # The example build backend in Appendix A reverses the order of
@@ -93,6 +114,7 @@ def build_wheel(
     # these arguments positionally and in this specific order.
     wheel_directory, config_settings=None, metadata_directory=None
 ):
+    _get_config()
     wheel_name = f'{NAME}-{VERSION}-{PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}.whl'
     wheel_path = Path(wheel_directory) / wheel_name
     records = []
