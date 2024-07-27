@@ -100,9 +100,11 @@ def build_wheel(
         _add_folder_to_wheel(wheel, records, Path('.'), Path('src'))
         # Generate the .dist-info folder.
         di = Path(f'{NAME}-{VERSION}.dist-info')
-        wheel.writestr(str(di / 'METADATA'), METADATA)
-        wheel.writestr(str(di / 'WHEEL'), WHEEL)
+        _add_text_to_wheel(wheel, records, di / 'METADATA', METADATA)
+        _add_text_to_wheel(wheel, records, di / 'WHEEL', WHEEL)
         # TODO: entry_points.txt
-        wheel.write('LICENSE', arcname=di / 'LICENSE')
-        _add_text_to_wheel(wheel, records, di / 'RECORD', ''.join(records))
+        _add_file_to_wheel(wheel, records, di / 'LICENSE', Path('LICENSE'))
+        record_path = di / 'RECORD'
+        records.append(f'{record_path},,')
+        _add_text_to_wheel(wheel, records, record_path, ''.join(records))
     return wheel_name
