@@ -88,7 +88,7 @@ def _sha256_digest(f):
     return hasher.digest()
 
 
-def _add_file_to_wheel(wheel, records, dst_path, src_path):
+def _add_file(wheel, records, dst_path, src_path):
     wheel.write(src_path, arcname=dst_path)
     size = src_path.stat().st_size
     with open(src_path, 'rb') as f:
@@ -96,37 +96,43 @@ def _add_file_to_wheel(wheel, records, dst_path, src_path):
     records.append(f'{dst_path},sha256={checksum},{size}')
 
 
-def _add_text_to_wheel(wheel, records, dst_path, data):
+def _add_text(wheel, records, dst_path, lines):
+    data = _prepare_lines(lines)
     wheel.writestr(str(dst_path), data)
     size = len(data)
     checksum = _to_base64_for_record(sha256(data).digest())
     records.append(f'{dst_path},sha256={checksum},{size}')
 
 
-def _add_folder_to_wheel(wheel, records, dst_prefix, src_prefix):
+def _add_folder(wheel, records, dst_prefix, src_prefix):
     for path, folders, files in walk(src_prefix):
         path = Path(path)
         for file in files:
             src = path / file
             dst = dst_prefix / src.relative_to(src_prefix)
-            _add_file_to_wheel(wheel, records, dst, src)
+            _add_file(wheel, records, dst, src)
 
 
 def get_requires_for_build_wheel(config_settings=None):
     return ['tomli;python_version<"3.11"']
 
 
+def _add_other_dist_info_files(add, config):
+    add('METADATA', _metadata_file(config))
+    add('WHEEL', _wheel_file(config))
+    # TODO: entry_points.txt
+    add('LICENSE', Path('LICENSE'))
+
+
 def _add_dist_info(wheel, records, config):
     di = Path(f'{NAME}-{VERSION}.dist-info')
-    def _add_dist_file(name, lines):
-        _add_text_to_wheel(wheel, records, di / name, _prepare_lines(lines))
-    _add_dist_file('METADATA', _metadata_file(config))
-    _add_dist_file('WHEEL', _wheel_file(config))
-    # TODO: entry_points.txt
-    _add_file_to_wheel(wheel, records, di / 'LICENSE', Path('LICENSE'))
+    def add_dist_file(name, lines):
+        handler = _add_file if isinstance(lines, Path) else _add_text
+        handler(wheel, records, di / name, lines)
+    _add_other_dist_info_files(add_dist_file, config)
     # add self-reference before writing the file, but after all others.
     records.append(f'{di / "RECORD"},,')
-    _add_dist_file('RECORD', records)
+    add_dist_file('RECORD', records)
 
 
 def build_wheel(
@@ -142,6 +148,6 @@ def build_wheel(
     wheel_path = Path(wheel_directory) / wheel_name
     records = []
     with ZipFile(wheel_path, 'w', compression=ZIP_DEFLATED) as wheel:
-        _add_folder_to_wheel(wheel, records, Path('.'), Path('src'))
+        _add_folder(wheel, records, Path('.'), Path('src'))
         _add_dist_info(wheel, records, config)
     return wheel_name
