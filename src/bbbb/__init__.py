@@ -53,7 +53,7 @@ def build_sdist(sdist_directory, config_settings=None):
     # Make an sdist and return both the Python object and its filename
     name = f'{NAME}-{VERSION}.tar.gz'
     sdist_path = Path(sdist_directory) / name
-    with TarFile(sdist_path, 'w:gz', format=PAX_FORMAT) as sdist:
+    with TarFile(sdist_path, 'w:gz') as sdist:
         # Tar up the whole directory, minus hidden and special files
         sdist.add(
             Path('.').resolve(), arcname=f'{NAME}-{VERSION}',
