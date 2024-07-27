@@ -110,6 +110,19 @@ def get_requires_for_build_wheel(config_settings=None):
     return ['tomli;python_version<"3.11"']
 
 
+def _add_dist_info(wheel, records, config):
+    di = Path(f'{NAME}-{VERSION}.dist-info')
+    def _add_dist_file(name, lines):
+        _add_text_to_wheel(wheel, records, di / name, lines)
+    _add_dist_file('METADATA', _metadata_file(config))
+    _add_dist_file('WHEEL', _wheel_file(config))
+    # TODO: entry_points.txt
+    _add_file_to_wheel(wheel, records, di / 'LICENSE', Path('LICENSE'))
+    # add self-reference before writing the file, but after all others.
+    records.append(f'{di / "RECORD"},,')
+    _add_dist_file('RECORD', ''.join(records))
+
+
 def build_wheel(
     # This is the order specified in PEP 517, subsection 'Mandatory hooks'.
     # The example build backend in Appendix A reverses the order of
@@ -124,13 +137,5 @@ def build_wheel(
     records = []
     with ZipFile(wheel_path, 'w', compression=ZIP_DEFLATED) as wheel:
         _add_folder_to_wheel(wheel, records, Path('.'), Path('src'))
-        # Generate the .dist-info folder.
-        di = Path(f'{NAME}-{VERSION}.dist-info')
-        _add_text_to_wheel(wheel, records, di / 'METADATA', _metadata_file(config))
-        _add_text_to_wheel(wheel, records, di / 'WHEEL', _wheel_file(config))
-        # TODO: entry_points.txt
-        _add_file_to_wheel(wheel, records, di / 'LICENSE', Path('LICENSE'))
-        record_path = di / 'RECORD'
-        records.append(f'{record_path},,')
-        _add_text_to_wheel(wheel, records, record_path, ''.join(records))
+        _add_dist_info(wheel, records, config)
     return wheel_name
