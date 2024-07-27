@@ -24,13 +24,17 @@ VERSION = '0.1.0'
 PYTHON_TAG = 'py3'
 ABI_TAG = 'none'
 PLATFORM_TAG = 'any'
-# According to the specifications on packaging.python.org, for a
-# pyproject.toml-based sdist, we must conform to version 2.2 or later.
-# So we will specify version 2.2 even though we are only using basic features.
-METADATA = f'Metadata-Version: 2.2\nName: {NAME}\nVersion: {VERSION}'
-WHEEL = f'Wheel-Version: 1.0\nGenerator: bbbb 0.1.0\nRoot-Is-Purelib: true\nTag: {PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}'
-# Also need a RECORD file and to copy LICENSE into the .dist-info.
-# Also should support making entry_points.txt.
+
+
+def _metadata_file(config):
+    # According to the specifications on packaging.python.org, for a
+    # pyproject.toml-based sdist, we must conform to version 2.2 or later.
+    # So we specify version 2.2 even though we are only using basic features.
+    return f'Metadata-Version: 2.2\nName: {NAME}\nVersion: {VERSION}'
+
+
+def _wheel_file(config):
+    return f'Wheel-Version: 1.0\nGenerator: bbbb 0.1.0\nRoot-Is-Purelib: true\nTag: {PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}'
 
 
 def get_requires_for_build_sdist(config_settings=None):
@@ -45,7 +49,7 @@ def _exclude_hidden_and_special_files(archive_entry):
 
 
 def build_sdist(sdist_directory, config_settings=None):
-    _get_config()
+    config = _get_config()
     # Make an sdist and return both the Python object and its filename
     name = f'{NAME}-{VERSION}.tar.gz'
     sdist_path = Path(sdist_directory) / name
@@ -57,7 +61,7 @@ def build_sdist(sdist_directory, config_settings=None):
         )
         # Create (or overwrite) metadata file (directly into archive).
         info = TarInfo(f'{NAME}-{VERSION}/PKG-INFO')
-        data = METADATA.encode()
+        data = _metadata_file(config).encode()
         info.size = len(data)
         sdist.addfile(info, BytesIO(data))
     return name
@@ -114,7 +118,7 @@ def build_wheel(
     # these arguments positionally and in this specific order.
     wheel_directory, config_settings=None, metadata_directory=None
 ):
-    _get_config()
+    config = _get_config()
     wheel_name = f'{NAME}-{VERSION}-{PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}.whl'
     wheel_path = Path(wheel_directory) / wheel_name
     records = []
@@ -122,8 +126,8 @@ def build_wheel(
         _add_folder_to_wheel(wheel, records, Path('.'), Path('src'))
         # Generate the .dist-info folder.
         di = Path(f'{NAME}-{VERSION}.dist-info')
-        _add_text_to_wheel(wheel, records, di / 'METADATA', METADATA)
-        _add_text_to_wheel(wheel, records, di / 'WHEEL', WHEEL)
+        _add_text_to_wheel(wheel, records, di / 'METADATA', _metadata_file(config))
+        _add_text_to_wheel(wheel, records, di / 'WHEEL', _wheel_file(config))
         # TODO: entry_points.txt
         _add_file_to_wheel(wheel, records, di / 'LICENSE', Path('LICENSE'))
         record_path = di / 'RECORD'
