@@ -30,11 +30,14 @@ def _metadata_file(config):
     # According to the specifications on packaging.python.org, for a
     # pyproject.toml-based sdist, we must conform to version 2.2 or later.
     # So we specify version 2.2 even though we are only using basic features.
-    return f'Metadata-Version: 2.2\nName: {NAME}\nVersion: {VERSION}'
+    return ['Metadata-Version: 2.2', f'Name: {NAME}', f'Version: {VERSION}']
 
 
 def _wheel_file(config):
-    return f'Wheel-Version: 1.0\nGenerator: bbbb 0.1.0\nRoot-Is-Purelib: true\nTag: {PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}'
+    return [
+        'Wheel-Version: 1.0', 'Generator: bbbb 0.1.0', 'Root-Is-Purelib: true',
+        f'Tag: {PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}'
+    ]
 
 
 def get_requires_for_build_sdist(config_settings=None):
@@ -46,6 +49,10 @@ def _exclude_hidden_and_special_files(archive_entry):
     if archive_entry.isfile() or archive_entry.isdir():
         if not Path(archive_entry.name).name.startswith('.'):
             return archive_entry
+
+
+def _prepare_lines(lines):
+    return ('\n'.join(lines) + '\n').encode('utf-8', 'strict')
 
 
 def build_sdist(sdist_directory, config_settings=None):
@@ -61,7 +68,7 @@ def build_sdist(sdist_directory, config_settings=None):
         )
         # Create (or overwrite) metadata file (directly into archive).
         info = TarInfo(f'{NAME}-{VERSION}/PKG-INFO')
-        data = _metadata_file(config).encode()
+        data = _prepare_lines(_metadata_file(config))
         info.size = len(data)
         sdist.addfile(info, BytesIO(data))
     return name
@@ -86,15 +93,14 @@ def _add_file_to_wheel(wheel, records, dst_path, src_path):
     size = src_path.stat().st_size
     with open(src_path, 'rb') as f:
         checksum = _to_base64_for_record(_sha256_digest(f))
-    records.append(f'{dst_path},sha256={checksum},{size}\n')
+    records.append(f'{dst_path},sha256={checksum},{size}')
 
 
-def _add_text_to_wheel(wheel, records, dst_path, text):
-    data = text.encode('utf-8', 'strict')
+def _add_text_to_wheel(wheel, records, dst_path, data):
     wheel.writestr(str(dst_path), data)
     size = len(data)
     checksum = _to_base64_for_record(sha256(data).digest())
-    records.append(f'{dst_path},sha256={checksum},{size}\n')
+    records.append(f'{dst_path},sha256={checksum},{size}')
 
 
 def _add_folder_to_wheel(wheel, records, dst_prefix, src_prefix):
@@ -113,14 +119,14 @@ def get_requires_for_build_wheel(config_settings=None):
 def _add_dist_info(wheel, records, config):
     di = Path(f'{NAME}-{VERSION}.dist-info')
     def _add_dist_file(name, lines):
-        _add_text_to_wheel(wheel, records, di / name, lines)
+        _add_text_to_wheel(wheel, records, di / name, _prepare_lines(lines))
     _add_dist_file('METADATA', _metadata_file(config))
     _add_dist_file('WHEEL', _wheel_file(config))
     # TODO: entry_points.txt
     _add_file_to_wheel(wheel, records, di / 'LICENSE', Path('LICENSE'))
     # add self-reference before writing the file, but after all others.
     records.append(f'{di / "RECORD"},,')
-    _add_dist_file('RECORD', ''.join(records))
+    _add_dist_file('RECORD', records)
 
 
 def build_wheel(
