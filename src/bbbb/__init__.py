@@ -60,21 +60,29 @@ def _sha256_digest(f):
     return hasher.digest()
 
 
-def _add_file_to_wheel(wheel, src_path, dst_path):
+def _add_file_to_wheel(wheel, records, dst_path, src_path):
     wheel.write(src_path, arcname=dst_path)
     size = src_path.stat().st_size
     with open(src_path, 'rb') as f:
         checksum = _to_base64_for_record(_sha256_digest(f))
-    return f'{dst_path},sha256={checksum},{size}\n'
+    records.append(f'{dst_path},sha256={checksum},{size}\n')
 
 
-def _record_entries(wheel, src_prefix, dst_prefix):
+def _add_text_to_wheel(wheel, records, dst_path, text):
+    data = text.encode('utf-8', 'strict')
+    wheel.writestr(str(dst_path), data)
+    size = len(data)
+    checksum = _to_base64_for_record(sha256(data).digest())
+    records.append(f'{dst_path},sha256={checksum},{size}\n')
+
+
+def _add_folder_to_wheel(wheel, records, dst_prefix, src_prefix):
     for path, folders, files in walk(src_prefix):
         path = Path(path)
         for file in files:
             src = path / file
             dst = dst_prefix / src.relative_to(src_prefix)
-            yield _add_file_to_wheel(wheel, src, dst)
+            _add_file_to_wheel(wheel, records, dst, src)
 
 
 def build_wheel(
@@ -87,13 +95,14 @@ def build_wheel(
 ):
     wheel_name = f'{NAME}-{VERSION}-{PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}.whl'
     wheel_path = Path(wheel_directory) / wheel_name
+    records = []
     with ZipFile(wheel_path, 'w', compression=ZIP_DEFLATED) as wheel:
-        record = ''.join(_record_entries(wheel, Path('src'), Path('.')))
+        _add_folder_to_wheel(wheel, records, Path('.'), Path('src'))
         # Generate the .dist-info folder.
         di = Path(f'{NAME}-{VERSION}.dist-info')
         wheel.writestr(str(di / 'METADATA'), METADATA)
         wheel.writestr(str(di / 'WHEEL'), WHEEL)
-        wheel.writestr(str(di / 'RECORD'), record)
         # TODO: entry_points.txt
         wheel.write('LICENSE', arcname=di / 'LICENSE')
+        _add_text_to_wheel(wheel, records, di / 'RECORD', ''.join(records))
     return wheel_name
