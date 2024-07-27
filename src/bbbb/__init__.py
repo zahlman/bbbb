@@ -1,7 +1,7 @@
 from base64 import urlsafe_b64encode
 from hashlib import sha256
 from io import BytesIO
-from os import walk # Path doesn't have .walk until 3.12
+from os import walk # Path.walk requires 3.12; simpler to ignore it
 from pathlib import Path
 from tarfile import open as TarFile, PAX_FORMAT, TarInfo
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -24,15 +24,15 @@ WHEEL = f'Wheel-Version: 1.0\nGenerator: bbbb 0.1.0\nRoot-Is-Purelib: true\nTag:
 def _exclude_hidden_and_special_files(archive_entry):
     # Tarfile filter to exclude hidden and special files from the archive
     if archive_entry.isfile() or archive_entry.isdir():
-        if not Path(archive_entry.name).name.startswith("."):
+        if not Path(archive_entry.name).name.startswith('.'):
             return archive_entry
 
 
-def build_sdist(sdist_directory, config_settings):
+def build_sdist(sdist_directory, config_settings=None):
     # Make an sdist and return both the Python object and its filename
-    name = f"{NAME}-{VERSION}.tar.gz"
+    name = f'{NAME}-{VERSION}.tar.gz'
     sdist_path = Path(sdist_directory) / name
-    with TarFile(sdist_path, "w:gz", format=PAX_FORMAT) as sdist:
+    with TarFile(sdist_path, 'w:gz', format=PAX_FORMAT) as sdist:
         # Tar up the whole directory, minus hidden and special files
         sdist.add(
             Path('.').resolve(), arcname=f'{NAME}-{VERSION}',
@@ -86,7 +86,7 @@ def _add_folder_to_wheel(wheel, records, dst_prefix, src_prefix):
 
 
 def build_wheel(
-    # This is the order specified in PEP 517, subsection "Mandatory hooks".
+    # This is the order specified in PEP 517, subsection 'Mandatory hooks'.
     # The example build backend in Appendix A reverses the order of
     # `config_settings` and `metadata_directory`. However, this does not
     # actually work with standard tooling, because `pyproject_hooks` passes
