@@ -7,37 +7,50 @@ from tarfile import open as TarFile, PAX_FORMAT, TarInfo
 from zipfile import ZipFile, ZIP_DEFLATED
 
 
-def _get_config():
+BBBB_VERSION = '0.1.0'
+# TODO: generate a version label in the self-build process?
+
+
+def _read_toml(name):
     # Can't import at the start, because of the need to bootstrap the
     # environment via `get_requires_for_build_*`.
     try:
         from tomllib import load as load_toml # requires 3.11+
     except ImportError: # 3.10 or earlier, so not in the standard library
         from tomli import load as load_toml # third-party implementation.
-    # No validation is attempted; that's the job of a frontend or integrator.
-    with open('pyproject.toml', 'rb') as f:
+    with open(name, 'rb') as f:
         return load_toml(f) # let errors propagate
 
 
-NAME = 'bbbb'
-VERSION = '0.1.0'
-PYTHON_TAG = 'py3'
-ABI_TAG = 'none'
-PLATFORM_TAG = 'any'
+def _get_config(manual):
+    ppt = _read_toml('pyproject.toml')
+    project = ppt['project']
+    bbbb = ppt.get('tool', {}).get('bbbb', {})
+    python_tag = manual.get('python_tag', 'py3')
+    abi_tag = manual.get('abi_tag', 'none')
+    platform_tag = manual.get('platform_tag', 'any')
+    return {
+        'name': project['name'],
+        'version': project['version'],
+        'tags': (python_tag, abi_tag, platform_tag),
+        'sdist': bbbb.get('sdist', {}),
+        'wheel': bbbb.get('wheel', {})
+    }
 
 
 def _metadata_file(config):
     # According to the specifications on packaging.python.org, for a
     # pyproject.toml-based sdist, we must conform to version 2.2 or later.
     # So we specify version 2.2 even though we are only using basic features.
-    return ['Metadata-Version: 2.2', f'Name: {NAME}', f'Version: {VERSION}']
+    name, version = config['name'], config['version']
+    return ['Metadata-Version: 2.2', f'Name: {name}', f'Version: {version}']
 
 
 def _wheel_file(config):
-    return [
-        'Wheel-Version: 1.0', 'Generator: bbbb 0.1.0', 'Root-Is-Purelib: true',
-        f'Tag: {PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}'
-    ]
+    generator = f'Generator: bbbb {BBBB_VERSION}'
+    result = ['Wheel-Version: 1.0', generator, 'Root-Is-Purelib: true']
+    result.append('Tag: {}-{}-{}'.format(*config['tags']))
+    return result
 
 
 def get_requires_for_build_sdist(config_settings=None):
@@ -56,22 +69,23 @@ def _prepare_lines(lines):
 
 
 def build_sdist(sdist_directory, config_settings=None):
-    config = _get_config()
+    config = _get_config(config_settings)
+    name, version = config['name'], config['version']
     # Make an sdist and return both the Python object and its filename
-    name = f'{NAME}-{VERSION}.tar.gz'
-    sdist_path = Path(sdist_directory) / name
+    result_name = f'{name}-{version}.tar.gz'
+    sdist_path = Path(sdist_directory) / result_name
     with TarFile(sdist_path, 'w:gz') as sdist:
         # Tar up the whole directory, minus hidden and special files
         sdist.add(
-            Path('.').resolve(), arcname=f'{NAME}-{VERSION}',
+            Path('.').resolve(), arcname=f'{name}-{version}',
             filter=_exclude_hidden_and_special_files
         )
         # Create (or overwrite) metadata file (directly into archive).
-        info = TarInfo(f'{NAME}-{VERSION}/PKG-INFO')
+        info = TarInfo(f'{name}-{version}/PKG-INFO')
         data = _prepare_lines(_metadata_file(config))
         info.size = len(data)
         sdist.addfile(info, BytesIO(data))
-    return name
+    return result_name
 
 
 def _to_base64_for_record(data):
@@ -125,7 +139,8 @@ def _add_other_dist_info_files(add, config):
 
 
 def _add_dist_info(wheel, records, config):
-    di = Path(f'{NAME}-{VERSION}.dist-info')
+    name, version = config['name'], config['version']
+    di = Path(f'{name}-{version}.dist-info')
     def add_dist_file(name, lines):
         handler = _add_file if isinstance(lines, Path) else _add_text
         handler(wheel, records, di / name, lines)
@@ -143,8 +158,9 @@ def build_wheel(
     # these arguments positionally and in this specific order.
     wheel_directory, config_settings=None, metadata_directory=None
 ):
-    config = _get_config()
-    wheel_name = f'{NAME}-{VERSION}-{PYTHON_TAG}-{ABI_TAG}-{PLATFORM_TAG}.whl'
+    config = _get_config(config_settings)
+    name, version, tags = config['name'], config['version'], config['tags']
+    wheel_name = f'{name}-{version}-{tags[0]}-{tags[1]}-{tags[2]}.whl'
     wheel_path = Path(wheel_directory) / wheel_name
     records = []
     with ZipFile(wheel_path, 'w', compression=ZIP_DEFLATED) as wheel:
