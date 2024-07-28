@@ -1,5 +1,6 @@
 from base64 import urlsafe_b64encode
 from hashlib import sha256
+from itertools import product as cartesian_product
 from os import walk # Path.walk requires 3.12; simpler to ignore it
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -45,7 +46,8 @@ def _metadata_file(config):
 def _wheel_file(config):
     generator = f'Generator: bbbb {BBBB_VERSION}'
     result = ['Wheel-Version: 1.0', generator, 'Root-Is-Purelib: true']
-    result.append('Tag: {}-{}-{}'.format(*config['tags']))
+    for tags in cartesian_product(*(t.split('.') for t in config['tags'])):
+        result.append('Tag: {}-{}-{}'.format(*tags))
     return result
 
 
