@@ -32,7 +32,7 @@ class UnsupportedOperation(Exception):
 
 
 def build_sdist(sdist_directory, config_settings=None):
-    raise UnsupportedOperation 
+    raise UnsupportedOperation
 
 
 def _metadata_file(config):
@@ -45,10 +45,9 @@ def _metadata_file(config):
 
 def _wheel_file(config):
     generator = f'Generator: bbbb {BBBB_VERSION}'
-    result = ['Wheel-Version: 1.0', generator, 'Root-Is-Purelib: true']
-    for tags in cartesian_product(*(t.split('.') for t in config['tags'])):
-        result.append('Tag: {}-{}-{}'.format(*tags))
-    return result
+    info = ['Wheel-Version: 1.0', generator, 'Root-Is-Purelib: true']
+    tag_groups = cartesian_product(*(t.split('.') for t in config['tags']))
+    return info + [f'Tag: {"-".join(tags)}' for tags in tag_groups]
 
 
 def _to_base64_for_record(data):
@@ -158,7 +157,7 @@ def build_wheel(
 ):
     config = _get_config(config_settings)
     name, version, tags = config['name'], config['version'], config['tags']
-    wheel_name = f'{name}-{version}-{tags[0]}-{tags[1]}-{tags[2]}.whl'
+    wheel_name = f'{name}-{version}-{"-".join(tags)}.whl'
     wheel_path = Path(wheel_directory) / wheel_name
     records = []
     with ZipFile(wheel_path, 'w', compression=ZIP_DEFLATED) as wheel:
