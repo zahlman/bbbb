@@ -6,7 +6,7 @@ from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
 
-BBBB_VERSION = '0.1.0'
+BBBB_VERSION = '0.2.1'
 # TODO: generate a version label in the self-build process?
 
 
