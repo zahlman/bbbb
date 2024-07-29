@@ -1,6 +1,7 @@
 from importlib import import_module
 from io import BytesIO
 from pathlib import Path
+import sys
 from tarfile import open as TarFile, TarInfo
 # Build hooks
 from .wheel import build_wheel, get_requires_for_build_wheel
@@ -16,9 +17,9 @@ def _invoke(name, *args, **kwargs):
 
 
 _always_include = set(map(str.casefold, ('COPYING', 'LICENSE', 'README')))
-def _allow_path(config, root_folder, path):
+def _allow_path(config, path):
     # Include certain files regardless of user setting.
-    if (path.parent == Path(root_folder)):
+    if (path.parent == Path('.')):
         if path.stem.casefold() in _always_include:
             return True
         if path.name.casefold() == 'pyproject.toml'.casefold():
@@ -33,8 +34,8 @@ def _allow_path(config, root_folder, path):
 def _filter_sdist(config, root_folder, tar_info):
     if not (tar_info.isfile() or tar_info.isdir()):
         return None
-    path = Path(tar_info.name)
-    return tar_info if _allow_path(config, root_folder, path) else None
+    path = Path(tar_info.name).relative_to(root_folder)
+    return tar_info if _allow_path(config, path) else None
 
 
 def get_requires_for_build_sdist(config_settings=None):
@@ -47,6 +48,8 @@ def build_sdist(sdist_directory, config_settings=None):
     # Make an sdist and return both the Python object and its filename
     result_name = f'{name}-{version}.tar.gz'
     sdist_path = Path(sdist_directory) / result_name
+    # TODO: use a proper dynamic import
+    sys.path.append(str(Path('.').resolve()))
     with TarFile(sdist_path, 'w:gz') as sdist:
         root_folder = f'{name}-{version}'
         filter = lambda tar_info: _filter_sdist(config, root_folder, tar_info)
