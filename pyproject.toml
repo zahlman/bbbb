@@ -23,3 +23,6 @@ homepage = "https://github.com/zahlman/bbbb"
 requires = []
 build-backend = "bbbb"
 backend-path = ["src"]
+
+[tool.bbbb.sdist]
+file_filter = "sdist:example_filter"
