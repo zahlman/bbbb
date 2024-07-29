@@ -97,7 +97,9 @@ def _add_other_dist_info_files(add, config):
     add('METADATA', _metadata_file(config))
     add('WHEEL', _wheel_file(config))
     # TODO: entry_points.txt
-    add('LICENSE', Path('LICENSE'))
+    for license_path in Path('.').iterdir():
+        if license_path.stem.casefold() == 'LICENSE'.casefold():
+            add(str(license_path), license_path)
 
 
 def _add_dist_info(wheel, records, config):
