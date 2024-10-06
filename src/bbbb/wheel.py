@@ -1,7 +1,7 @@
 from base64 import urlsafe_b64encode
 from hashlib import sha256
 from itertools import product as cartesian_product
-from os import walk # Path.walk requires 3.12; simpler to ignore it
+from os import makedirs, walk # Path.walk requires 3.12; simpler to ignore it
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -133,6 +133,10 @@ def _get_config(manual):
     ppt = _read_toml('pyproject.toml')
     project = ppt['project']
     bbbb = ppt.get('tool', {}).get('bbbb', {})
+    if manual is None:
+        # Pip's build process might not override config_settings
+        # although Build apparently does.
+        manual = {}
     python_tag = manual.get('python_tag', 'py3')
     abi_tag = manual.get('abi_tag', 'none')
     platform_tag = manual.get('platform_tag', 'any')
@@ -162,6 +166,7 @@ def build_wheel(
     wheel_name = f'{name}-{version}-{"-".join(tags)}.whl'
     wheel_path = Path(wheel_directory) / wheel_name
     records = []
+    makedirs(wheel_directory, exist_ok=True)
     with ZipFile(wheel_path, 'w', compression=ZIP_DEFLATED) as wheel:
         _add_folder(wheel, records, Path('.'), Path('src'))
         _add_dist_info(wheel, records, config)

@@ -1,5 +1,6 @@
 from importlib import import_module
 from io import BytesIO
+from os import makedirs
 from pathlib import Path
 import sys
 from tarfile import open as TarFile, TarInfo
@@ -48,6 +49,7 @@ def build_sdist(sdist_directory, config_settings=None):
     # Make an sdist and return both the Python object and its filename
     result_name = f'{name}-{version}.tar.gz'
     sdist_path = Path(sdist_directory) / result_name
+    makedirs(sdist_directory, exist_ok=True)
     # TODO: use a proper dynamic import
     sys.path.append(str(Path('.').resolve()))
     with TarFile(sdist_path, 'w:gz') as sdist:
