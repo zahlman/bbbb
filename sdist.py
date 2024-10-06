@@ -1,10 +1,14 @@
 def example_filter(config, path):
     if path.name.startswith('.'):
         return False
-    if path.parts == ('dist',):
-        return False
-    if '__pycache__' in path.parts:
+    parts = path.parts
+    if '__pycache__' in parts:
         return False
     if path.parts == ('sdist.py',): # self-exclusion
+        return False
+    if parts[0] == 'dist':
+        return False
+    if 'test' in parts[0]: # not just the tests themselves,
+        # but files/folders created by them.
         return False
     return True
