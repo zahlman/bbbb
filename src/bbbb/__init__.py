@@ -20,6 +20,12 @@ def _invoke(name, *args, **kwargs):
 _always_include = set(map(str.casefold, ('COPYING', 'LICENSE', 'README')))
 def _allow_path(config, path):
     # Include certain files regardless of user setting.
+    if path == Path('.'):
+        # This is a weird quirk of Tar that '.' is included in the iteration.
+        # Filtering it out would prune *everything* (except `PKG-INFO` which
+        # is explicitly added later); the user's filter shouldn't be allowed
+        # to do that, so this path isn't forwarded to the filter.
+        return True
     if (path.parent == Path('.')):
         if path.stem.casefold() in _always_include:
             return True
