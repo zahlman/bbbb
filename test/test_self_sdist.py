@@ -24,9 +24,16 @@ def copy_self(tmpdir):
     return copy
 
 
+def _process_line(line):
+    return '' if line.startswith('#') else line.rstrip()
+
+
 def _verify_sdist(root_name, manifest_file):
     with open(manifest_file) as f:
-        expected = [root_name] + [f'{root_name}/{e.strip()}' for e in f]
+        entries = map(_process_line, f)
+        expected = [f'{root_name}/{e}' for e in entries if e]
+        expected.append(root_name)
+        expected.sort()
     with open_tar(f'test_sdist/{root_name}.tar.gz') as t:
         actual = sorted(m.path for m in t.getmembers())
     assert expected == actual
