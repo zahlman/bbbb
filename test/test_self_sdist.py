@@ -34,7 +34,7 @@ def _verify_sdist(root_name, manifest_file):
         expected = [f'{root_name}/{e}' for e in entries if e]
         expected.append(root_name)
         expected.sort()
-    with open_tar(f'test_sdist/{root_name}.tar.gz') as t:
+    with open_tar(f'test_dist/{root_name}.tar.gz') as t:
         actual = sorted(m.path for m in t.getmembers())
     assert expected == actual
 
@@ -42,6 +42,6 @@ def _verify_sdist(root_name, manifest_file):
 def test_self_sdist(copy_self):
     tmpdir = copy_self()
     os.chdir(tmpdir)
-    bbbb.build_sdist('test_sdist')
-    assert 'test_sdist' in os.listdir()
+    bbbb.build_sdist('test_dist')
+    assert 'test_dist' in os.listdir()
     _verify_sdist('bbbb-0.3.0', project / 'test' / 'self_manifest.txt')
