@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from shutil import copytree
 from tarfile import open as open_tar
+from zipfile import ZipFile
 
 
 project = Path(__file__).parent.parent
@@ -36,5 +37,33 @@ def test_self_sdist(copy_self):
     tmpdir = copy_self()
     os.chdir(tmpdir)
     build.ProjectBuilder('.').build('sdist', 'test_dist')
-    assert 'test_dist' in os.listdir()
     _verify_sdist('bbbb-0.3.0', project / 'test' / 'self_manifest.txt')
+
+
+def _verify_wheel(root_name, manifest_file):
+    with open(manifest_file) as f:
+        entries = map(_process_line, f)
+        expected = [f'{root_name}/{e}' for e in entries if e]
+        expected.append(root_name)
+        expected.sort()
+    with ZipFile(f'test_dist/{root_name}-py3-none-any.whl') as z:
+        actual = sorted(m.orig_filename for m in z.filelist)
+    assert expected == actual
+
+
+def test_self_wheel(copy_self):
+    tmpdir = copy_self()
+    os.chdir(tmpdir)
+    build.ProjectBuilder('.').build('wheel', 'test_dist')
+    _verify_wheel('bbbb-0.3.0', project / 'test' / 'self_manifest.txt')
+
+
+def test_self_wheel_via_sdist(copy_self):
+    tmpdir = copy_self()
+    os.chdir(tmpdir)
+    build.ProjectBuilder('.').build('sdist', 'test_dist')
+    name = 'bbbb-0.3.0'
+    with open_tar(f'test_dist/{name}.tar.gz') as t:
+        t.extractall(f'test_dist')
+    build.ProjectBuilder(f'test_dist/{name}').build('wheel', 'test_dist')
+    _verify_wheel('bbbb-0.3.0', project / 'test' / 'self_manifest.txt')
