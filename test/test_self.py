@@ -1,16 +1,17 @@
-import build
+# Standard library
 import os
 from pathlib import Path
-import pytest
 from shutil import copytree
 from tarfile import open as open_tar
 from zipfile import ZipFile
+# third-party
+import build, pytest
 
 
 project = Path(__file__).parent.parent
 
 
-def _ignore_toplevel_dotfiles(src, names):
+def _toplevel_dotfiles(src, names):
     # a filter for copytree
     is_root = (Path(src) == project)
     return [n for n in names if n.startswith('.')] if is_root else []
@@ -18,10 +19,7 @@ def _ignore_toplevel_dotfiles(src, names):
 
 @pytest.fixture
 def copy_self(tmpdir):
-    copytree(
-        str(project), str(tmpdir),
-        ignore=_ignore_toplevel_dotfiles, dirs_exist_ok=True
-    )
+    copytree(project, tmpdir, ignore=_toplevel_dotfiles, dirs_exist_ok=True)
     os.chdir(tmpdir)
 
 
