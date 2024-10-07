@@ -10,9 +10,18 @@ from zipfile import ZipFile
 project = Path(__file__).parent.parent
 
 
+def _ignore_toplevel_dotfiles(src, names):
+    # a filter for copytree
+    is_root = (Path(src) == project)
+    return [n for n in names if n.startswith('.')] if is_root else []
+
+
 @pytest.fixture
 def copy_self(tmpdir):
-    copytree(str(project), str(tmpdir), dirs_exist_ok=True)
+    copytree(
+        str(project), str(tmpdir),
+        ignore=_ignore_toplevel_dotfiles, dirs_exist_ok=True
+    )
     os.chdir(tmpdir)
 
 
