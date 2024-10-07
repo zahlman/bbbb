@@ -36,7 +36,7 @@ def test_self_sdist(copy_self):
     tmpdir = copy_self()
     os.chdir(tmpdir)
     build.ProjectBuilder('.').build('sdist', 'test_dist')
-    _verify_sdist('bbbb-0.3.0', project / 'test' / 'self_manifest.txt')
+    _verify_sdist('bbbb-0.3.0', project / 'test' / 'self_sdist_manifest.txt')
 
 
 def _verify_wheel(root_name, manifest_file):
@@ -53,7 +53,7 @@ def test_self_wheel(copy_self):
     tmpdir = copy_self()
     os.chdir(tmpdir)
     build.ProjectBuilder('.').build('wheel', 'test_dist')
-    _verify_wheel('bbbb-0.3.0', project / 'test' / 'self_manifest.txt')
+    _verify_wheel('bbbb-0.3.0', project / 'test' / 'self_wheel_manifest.txt')
 
 
 def test_self_wheel_via_sdist(copy_self):
@@ -64,4 +64,4 @@ def test_self_wheel_via_sdist(copy_self):
     with open_tar(f'test_dist/{name}.tar.gz') as t:
         t.extractall(f'test_dist')
     build.ProjectBuilder(f'test_dist/{name}').build('wheel', 'test_dist')
-    _verify_wheel('bbbb-0.3.0', project / 'test' / 'self_manifest.txt')
+    _verify_wheel('bbbb-0.3.0', project / 'test' / 'self_wheel_manifest.txt')
