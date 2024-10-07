@@ -24,9 +24,12 @@ def copy_self(tmpdir):
     return copy
 
 
-def _sdist_contents(archive, root):
-    with open_tar(archive) as t:
-        return sorted(m.path.replace(root, '.') for m in t.getmembers())
+def _verify_sdist(root_name, manifest_file):
+    with open(manifest_file) as f:
+        expected = [root_name] + [f'{root_name}/{e.strip()}' for e in f]
+    with open_tar(f'test_sdist/{root_name}.tar.gz') as t:
+        actual = sorted(m.path for m in t.getmembers())
+    assert expected == actual
 
 
 def test_self_sdist(copy_self):
@@ -34,8 +37,4 @@ def test_self_sdist(copy_self):
     os.chdir(tmpdir)
     bbbb.build_sdist('test_sdist')
     assert 'test_sdist' in os.listdir()
-    assert _sdist_contents('test_sdist/bbbb-0.3.0.tar.gz', 'bbbb-0.3.0') == [
-        '.',
-        './LICENSE.txt', './PKG-INFO', './README.md', './pyproject.toml',
-        './src', './src/bbbb', './src/bbbb/__init__.py', './src/bbbb/wheel.py'
-    ]
+    _verify_sdist('bbbb-0.3.0', project / 'test' / 'self_manifest.txt')
