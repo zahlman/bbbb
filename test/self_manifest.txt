@@ -1,11 +1,14 @@
+# Root folder
+bbbb-0.3.0
+
 # The actual source code
-src
-src/bbbb
-src/bbbb/__init__.py
-src/bbbb/wheel.py
+bbbb-0.3.0/src
+bbbb-0.3.0/src/bbbb
+bbbb-0.3.0/src/bbbb/__init__.py
+bbbb-0.3.0/src/bbbb/wheel.py
 
 # Standard boilerplate
-LICENSE.txt
-PKG-INFO
-README.md
-pyproject.toml
+bbbb-0.3.0/LICENSE.txt
+bbbb-0.3.0/PKG-INFO
+bbbb-0.3.0/README.md
+bbbb-0.3.0/pyproject.toml

@@ -25,8 +25,7 @@ def _process_line(line):
 def _verify_sdist(root_name, manifest_file):
     with open(manifest_file) as f:
         entries = map(_process_line, f)
-        expected = [f'{root_name}/{e}' for e in entries if e]
-        expected.append(root_name)
+        expected = [e for e in entries if e]
         expected.sort()
     with open_tar(f'test_dist/{root_name}.tar.gz') as t:
         actual = sorted(m.path for m in t.getmembers())
@@ -43,8 +42,7 @@ def test_self_sdist(copy_self):
 def _verify_wheel(root_name, manifest_file):
     with open(manifest_file) as f:
         entries = map(_process_line, f)
-        expected = [f'{root_name}/{e}' for e in entries if e]
-        expected.append(root_name)
+        expected = [e for e in entries if e]
         expected.sort()
     with ZipFile(f'test_dist/{root_name}-py3-none-any.whl') as z:
         actual = sorted(m.orig_filename for m in z.filelist)
