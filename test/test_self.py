@@ -12,56 +12,46 @@ project = Path(__file__).parent.parent
 
 @pytest.fixture
 def copy_self(tmpdir):
-    def copy():
-        copytree(str(project), str(tmpdir), dirs_exist_ok=True)
-        return tmpdir
-    return copy
+    copytree(str(project), str(tmpdir), dirs_exist_ok=True)
+    os.chdir(tmpdir)
 
 
-def _process_line(line):
-    return '' if line.startswith('#') else line.rstrip()
+def _list_tar_contents(name):
+    with open_tar(name) as t:
+        return sorted(m.path for m in t.getmembers())
 
 
-def _verify_sdist(root_name, manifest_file):
-    with open(manifest_file) as f:
-        entries = map(_process_line, f)
-        expected = [e for e in entries if e]
-        expected.sort()
-    with open_tar(f'test_dist/{root_name}.tar.gz') as t:
-        actual = sorted(m.path for m in t.getmembers())
-    assert expected == actual
+def _list_zip_contents(name):
+    with ZipFile(name) as z:
+        return sorted(m.orig_filename for m in z.filelist)
+
+
+def _read_manifest(name):
+    with open(name) as f:
+        entries = ['' if line.startswith('#') else line.rstrip() for line in f]
+    return sorted(e for e in entries if e)
 
 
 def test_self_sdist(copy_self):
-    tmpdir = copy_self()
-    os.chdir(tmpdir)
     build.ProjectBuilder('.').build('sdist', 'test_dist')
-    _verify_sdist('bbbb-0.3.0', project / 'test' / 'self_sdist_manifest.txt')
-
-
-def _verify_wheel(root_name, manifest_file):
-    with open(manifest_file) as f:
-        entries = map(_process_line, f)
-        expected = [e for e in entries if e]
-        expected.sort()
-    with ZipFile(f'test_dist/{root_name}-py3-none-any.whl') as z:
-        actual = sorted(m.orig_filename for m in z.filelist)
+    expected = _read_manifest(project / 'test' / 'self_sdist_manifest.txt')
+    actual = _list_tar_contents(f'test_dist/bbbb-0.3.0.tar.gz')
     assert expected == actual
 
 
 def test_self_wheel(copy_self):
-    tmpdir = copy_self()
-    os.chdir(tmpdir)
     build.ProjectBuilder('.').build('wheel', 'test_dist')
-    _verify_wheel('bbbb-0.3.0', project / 'test' / 'self_wheel_manifest.txt')
+    expected = _read_manifest(project / 'test' / 'self_wheel_manifest.txt')
+    actual = _list_zip_contents('test_dist/bbbb-0.3.0-py3-none-any.whl')
+    assert expected == actual
 
 
 def test_self_wheel_via_sdist(copy_self):
-    tmpdir = copy_self()
-    os.chdir(tmpdir)
     build.ProjectBuilder('.').build('sdist', 'test_dist')
     name = 'bbbb-0.3.0'
     with open_tar(f'test_dist/{name}.tar.gz') as t:
         t.extractall(f'test_dist')
     build.ProjectBuilder(f'test_dist/{name}').build('wheel', 'test_dist')
-    _verify_wheel('bbbb-0.3.0', project / 'test' / 'self_wheel_manifest.txt')
+    expected = _read_manifest(project / 'test' / 'self_wheel_manifest.txt')
+    actual = _list_zip_contents('test_dist/bbbb-0.3.0-py3-none-any.whl')
+    assert expected == actual
