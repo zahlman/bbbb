@@ -15,7 +15,8 @@ except ImportError: # 3.10 or earlier, so not in the standard library
     from tomli import load as load_toml # third-party implementation.
 
 
-BBBB_ROOT = Path(__file__).parent.parent
+TEST_DIR = Path(__file__).parent
+BBBB_ROOT = TEST_DIR.parent.parent
 
 
 def _toplevel_not_src(src, names):
@@ -24,7 +25,7 @@ def _toplevel_not_src(src, names):
     src = Path(src)
     if src != BBBB_ROOT:
         return []
-    return [n for n in names if (src / n).is_dir() and n != 'src']
+    return [n for n in names if n.startswith('.')]
 
 
 def _read_config(filename, project_name, project_version):
@@ -51,7 +52,7 @@ def setup(tmpdir):
             project = load_toml(f)['project']
         name, version = project['name'], project['version']
         # Determine expectations for resulting sdist and wheel.
-        toml_path = BBBB_ROOT / 'test' / config_rel_path / f'{name}.toml'
+        toml_path = TEST_DIR / config_rel_path / f'{name}.toml'
         return _read_config(toml_path, name, version), name, version
     return _impl
 

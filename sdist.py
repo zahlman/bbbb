@@ -6,9 +6,10 @@ def example_filter(config, path):
         return False
     if path.parts == ('sdist.py',): # self-exclusion
         return False
-    if parts[0] == 'dist':
+    # sdists and wheels created either normally or in tests.
+    if parts[0] in ('dist', 'test_dist'):
         return False
-    if 'test' in parts[0]: # not just the tests themselves,
-        # but files/folders created by them.
+    # Exclude src/tests for now. TODO make this optional
+    if parts[:2] == ('src', 'tests'):
         return False
     return True

@@ -23,7 +23,7 @@ homepage = "https://github.com/zahlman/bbbb"
 
 [build-system]
 requires = []
-build-backend = "bbbb"
+build-backend = "bbbb.dev"
 backend-path = ["src"]
 
 [tool.bbbb.sdist]

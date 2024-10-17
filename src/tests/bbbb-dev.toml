@@ -7,8 +7,8 @@ files = [
 # N.B. package name doesn't have to match project name
 "{name}-{version}/src",
 "{name}-{version}/src/bbbb",
+"{name}-{version}/src/bbbb/dev.py",
 "{name}-{version}/src/bbbb/__init__.py",
-"{name}-{version}/src/bbbb/wheel.py",
 
 # Standard boilerplate
 "{name}-{version}/LICENSE.txt",
@@ -22,8 +22,8 @@ record = "{name}-{version}.dist-info/RECORD"
 files = [
 # The actual source code
 # N.B. this uses package name, not project name
+"bbbb/dev.py",
 "bbbb/__init__.py",
-"bbbb/wheel.py",
 
 # This assumes PYTHONDONTWRITEBYTECODE=1
 # and that any existing cached bytecode was cleared out first.
@@ -37,6 +37,7 @@ files = [
 "{name}-{version}.dist-info/METADATA"
 ]
 
+# TODO update these expected values once there are tests using them.
 [wheel.sha256]
 "{name}/__init__.py" = "IySNYBdCPkan6ufeYfqQkqoDqQz_9Z41XHCUhmJwGSE"
 "{name}/wheel.py" = "00XVzWPYMkaN4xk1RMsK0ZZb1HTy6ayeaAAkzEvf6B8"
