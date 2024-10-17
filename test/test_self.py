@@ -61,32 +61,39 @@ def _read_config(filename, project_name, project_version):
     return result
 
 
-def _build(kind, *, src='.', dst='test_dist'):
-    build.ProjectBuilder(src).build(kind, dst)
+def _build(kind, src):
+    build.ProjectBuilder(src).build(kind, 'test_dist')
 
 
-def test_self_sdist(setup):
-    name, version = setup
-    _build('sdist')
-    expected = _read_config(BBBB_ROOT / 'test' / 'expected.toml', name, version)
+def _verify_sdist(src_path, config_rel_path, name, version):
+    _build('sdist', src_path)
+    toml_path = BBBB_ROOT / 'test' / config_rel_path / 'expected.toml'
+    expected = _read_config(toml_path, name, version)
     actual = _list_tar_contents(f'test_dist/{name}-{version}.tar.gz')
     assert expected['sdist']['files'] == actual
 
 
-def test_self_wheel(setup):
-    name, version = setup
-    _build('wheel')
-    expected = _read_config(BBBB_ROOT / 'test' / 'expected.toml', name, version)
+def _verify_wheel(src_path, config_rel_path, name, version):
+    _build('wheel', src_path)
+    toml_path = BBBB_ROOT / 'test' / config_rel_path / 'expected.toml'
+    expected = _read_config(toml_path, name, version)
     actual = _list_zip_contents(f'test_dist/{name}-{version}-py3-none-any.whl')
     assert expected['wheel']['files'] == actual
+
+
+def test_self_sdist(setup):
+    name, version = setup
+    _verify_sdist('.', '.', name, version)
+
+
+def test_self_wheel(setup):
+    name, version = setup
+    _verify_wheel('.', '.', name, version)
 
 
 def test_self_wheel_via_sdist(setup):
     name, version = setup
-    _build('sdist')
+    _build('sdist', '.')
     with open_tar(f'test_dist/{name}-{version}.tar.gz') as t:
         t.extractall(f'test_dist')
-    _build('wheel', src=f'test_dist/{name}-{version}')
-    expected = _read_config(BBBB_ROOT / 'test' / 'expected.toml', name, version)
-    actual = _list_zip_contents(f'test_dist/{name}-{version}-py3-none-any.whl')
-    assert expected['wheel']['files'] == actual
+    _verify_wheel(f'test_dist/{name}-{version}', '.', name, version)
