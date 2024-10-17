@@ -1,0 +1,53 @@
+[sdist]
+files = [
+# Root folder
+"{name}-{version}",
+
+# The actual source code
+# N.B. package name doesn't have to match project name
+"{name}-{version}/src",
+"{name}-{version}/src/bbbb",
+"{name}-{version}/src/bbbb/__init__.py",
+"{name}-{version}/src/bbbb/wheel.py",
+
+# Standard boilerplate
+"{name}-{version}/LICENSE.txt",
+"{name}-{version}/PKG-INFO",
+"{name}-{version}/README.md",
+"{name}-{version}/pyproject.toml"
+]
+
+[wheel]
+record = "{name}-{version}.dist-info/RECORD"
+files = [
+# The actual source code
+# N.B. this uses package name, not project name
+"bbbb/__init__.py",
+"bbbb/wheel.py",
+
+# This assumes PYTHONDONTWRITEBYTECODE=1
+# and that any existing cached bytecode was cleared out first.
+# Otherwise the wheel can be expected to include __pycache__
+# folders with .pyc files in them, too.
+
+# Standard boilerplate
+"{name}-{version}.dist-info/LICENSE.txt",
+"{name}-{version}.dist-info/RECORD",
+"{name}-{version}.dist-info/WHEEL",
+"{name}-{version}.dist-info/METADATA"
+]
+
+[wheel.sha256]
+"{name}/__init__.py" = "IySNYBdCPkan6ufeYfqQkqoDqQz_9Z41XHCUhmJwGSE"
+"{name}/wheel.py" = "00XVzWPYMkaN4xk1RMsK0ZZb1HTy6ayeaAAkzEvf6B8"
+"{name}-{version}.dist-info/METADATA" = "bdIH2yh2vRfvLblH0KNbMC4j7YFzx6T5R-4q3FfTKQw"
+"{name}-{version}.dist-info/WHEEL" = "5_6X4BMfQ0fWAueA8ugExlsvQHGxbfGi_nYGIF9tpC4"
+"{name}-{version}.dist-info/LICENSE.txt" = "su2JgXqX3WBy7GNXq0GGtkeJA6hIOKnbiaWM1qgQb4E"
+
+[wheel.size]
+# Specify these as strings because we'll read strings from the file.
+"{name}/__init__.py" = "2832"
+"{name}/wheel.py" = "6676"
+"{name}-{version}.dist-info/METADATA" = "48"
+"{name}-{version}.dist-info/WHEEL" = "81"
+"{name}-{version}.dist-info/LICENSE.txt" = "1070"
