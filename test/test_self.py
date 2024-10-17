@@ -16,10 +16,13 @@ except ImportError: # 3.10 or earlier, so not in the standard library
 BBBB_ROOT = Path(__file__).parent.parent
 
 
-def _toplevel_dotfiles(src, names):
-    # a filter for copytree
-    is_root = (Path(src) == BBBB_ROOT)
-    return [n for n in names if n.startswith('.')] if is_root else []
+def _toplevel_not_src(src, names):
+    # a filter for copytree.
+    # Only copy the `src` folder when doing the self-test.
+    src = Path(src)
+    if src != BBBB_ROOT:
+        return []
+    return [n for n in names if (src / n).is_dir() and n != 'src']
 
 
 def _read_config(filename, project_name, project_version):
@@ -37,17 +40,18 @@ def _read_config(filename, project_name, project_version):
 
 @pytest.fixture
 def setup(tmpdir):
-    def _copy_project_and_get_metadata(project_path, config_rel_path):
-        copytree(project_path, tmpdir, ignore=_toplevel_dotfiles, dirs_exist_ok=True)
+    def _impl(project_path, config_rel_path, src_only):
+        ignore = _toplevel_not_src if src_only else None
+        copytree(project_path, tmpdir, ignore=ignore, dirs_exist_ok=True)
         os.chdir(tmpdir)
         # Determine project name and version for use in tests.
         with open('pyproject.toml', 'rb') as f:
             project = load_toml(f)['project']
         name, version = project['name'], project['version']
         # Determine expectations for resulting sdist and wheel.
-        toml_path = BBBB_ROOT / 'test' / config_rel_path / 'expected.toml'
+        toml_path = BBBB_ROOT / 'test' / config_rel_path / f'{name}.toml'
         return _read_config(toml_path, name, version), name, version
-    return _copy_project_and_get_metadata
+    return _impl
 
 
 def _list_tar_contents(name):
@@ -83,17 +87,17 @@ def _verify_wheel(src_path, config_rel_path, expected, name, version):
 
 
 def test_self_sdist(setup):
-    expected, name, version = setup(BBBB_ROOT, '.')
+    expected, name, version = setup(BBBB_ROOT, '.', True)
     _verify_sdist('.', '.', expected, name, version)
 
 
 def test_self_wheel(setup):
-    expected, name, version = setup(BBBB_ROOT, '.')
+    expected, name, version = setup(BBBB_ROOT, '.', True)
     _verify_wheel('.', '.', expected, name, version)
 
 
 def test_self_wheel_via_sdist(setup):
-    expected, name, version = setup(BBBB_ROOT, '.')
+    expected, name, version = setup(BBBB_ROOT, '.', True)
     _build('sdist', '.')
     with open_tar(f'test_dist/{name}-{version}.tar.gz') as t:
         t.extractall(f'test_dist')
