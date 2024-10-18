@@ -37,7 +37,7 @@ def _metadata_file(config):
 def _wheel_file(config):
     generator = f'Generator: bbbb {BBBB_VERSION}'
     info = ['Wheel-Version: 1.0', generator, 'Root-Is-Purelib: true']
-    tag_groups = cartesian_product(*(t.split('.') for t in config['tags']))
+    tag_groups = cartesian_product(*(t.split('.') for t in config['toml']['tags']))
     return info + [f'Tag: {"-".join(tags)}' for tags in tag_groups]
 
 
@@ -116,7 +116,7 @@ def _read_toml(name):
         return load_toml(f) # let errors propagate
 
 
-def _get_config(manual):
+def _get_config(manual, kind):
     # Also used for sdists, but the goal is to make a single-file
     # backend option for installers to build wheels - so the code
     # is left here, and imported from the main file.
@@ -124,19 +124,17 @@ def _get_config(manual):
     ppt = _read_toml('pyproject.toml')
     project = ppt['project']
     bbbb = ppt.get('tool', {}).get('bbbb', {})
-    if manual is None:
-        # Pip's build process might not override config_settings
-        # although Build apparently does.
-        manual = {}
-    python_tag = manual.get('python_tag', 'py3')
-    abi_tag = manual.get('abi_tag', 'none')
-    platform_tag = manual.get('platform_tag', 'any')
+    ppt_config = bbbb.get(kind, {})
+    if kind == 'wheel':
+        # It's intended that a user wheel-building hook might replace these.
+        ppt_config.setdefault('tags', ['py3', 'none', 'any'])
     return {
         'name': project['name'],
         'version': project['version'],
-        'tags': (python_tag, abi_tag, platform_tag),
-        'sdist': bbbb.get('sdist', {}),
-        'wheel': bbbb.get('wheel', {})
+        'toml': ppt_config,
+        # Pip's build process might not override config_settings
+        # although Build apparently does.
+        'commandline': manual or {}
     }
 
 
@@ -152,9 +150,10 @@ def build_wheel(
     # these arguments positionally and in this specific order.
     wheel_directory, config_settings=None, metadata_directory=None
 ):
-    config = _get_config(config_settings)
-    name, version, tags = config['name'], config['version'], config['tags']
-    wheel_name = f'{name}-{version}-{"-".join(tags)}.whl'
+    config = _get_config(config_settings, 'wheel')
+    name, version = config['name'], config['version']
+    tags = '-'.join(config['toml']['tags'])
+    wheel_name = f'{name}-{version}-{tags}.whl'
     wheel_path = Path(wheel_directory) / wheel_name
     records = []
     makedirs(wheel_directory, exist_ok=True)

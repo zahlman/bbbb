@@ -32,8 +32,8 @@ def _allow_path(config, path):
         if path.name.casefold() == 'pyproject.toml'.casefold():
             return True
     # Without a hook, just exclude dotfiles.
-    if 'file_filter' in config['sdist']:
-        return _invoke(config['sdist']['file_filter'], config, path)
+    if 'file_filter' in config['toml']:
+        return _invoke(config['toml']['file_filter'], config, path)
     else:
         return not path.name.startswith('.')
 
@@ -46,7 +46,7 @@ def _filter_sdist(config, root_folder, tar_info):
 
 
 def build_sdist(sdist_directory, config_settings=None):
-    config = _get_config(config_settings)
+    config = _get_config(config_settings, 'sdist')
     name, version = config['name'], config['version']
     # Make an sdist and return both the Python object and its filename
     result_name = f'{name}-{version}.tar.gz'
