@@ -2,7 +2,7 @@
 # The main package is bbbb-dev;
 # bbbb is a wheel-only, optimized release for direct use by Pip etc.
 name = "bbbb-dev"
-version = "0.4.0"
+version = "0.4.1"
 description = "a Bare-Bones Build Backend (for Python packaging)"
 readme = "README.md"
 classifiers = [
