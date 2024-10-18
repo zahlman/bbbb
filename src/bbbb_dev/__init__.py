@@ -8,6 +8,7 @@ from tarfile import open as TarFile, TarInfo
 from bbbb import build_wheel, get_requires_for_build_wheel
 # Private implementation stuff
 from bbbb import _get_config, _metadata_file, _prepare_lines
+from bbbb import _normalized_name_and_version
 
 
 def _invoke(name, *args, **kwargs):
@@ -48,19 +49,19 @@ def _filter_sdist(config, root_folder, tar_info):
 def build_sdist(sdist_directory, config_settings=None):
     config = _get_config(config_settings, 'sdist')
     name, version = config['name'], config['version']
+    nv = _normalized_name_and_version(name, version)
     # Make an sdist and return both the Python object and its filename
-    result_name = f'{name}-{version}.tar.gz'
+    result_name = f'{nv}.tar.gz'
     sdist_path = Path(sdist_directory) / result_name
     makedirs(sdist_directory, exist_ok=True)
     # TODO: use a proper dynamic import
     sys.path.append(str(Path('.').resolve()))
     with TarFile(sdist_path, 'w:gz') as sdist:
-        root_folder = f'{name}-{version}'
-        filter = lambda tar_info: _filter_sdist(config, root_folder, tar_info)
+        filter = lambda tar_info: _filter_sdist(config, nv, tar_info)
         # Tar up the whole directory, minus hidden and special files
-        sdist.add(Path('.').resolve(), arcname=root_folder, filter=filter)
+        sdist.add(Path('.').resolve(), arcname=nv, filter=filter)
         # Create (or overwrite) metadata file (directly into archive).
-        info = TarInfo(f'{root_folder}/PKG-INFO')
+        info = TarInfo(f'{nv}/PKG-INFO')
         data = _prepare_lines(_metadata_file(config))
         info.size = len(data)
         sdist.addfile(info, BytesIO(data))

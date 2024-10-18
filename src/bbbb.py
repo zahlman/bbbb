@@ -3,6 +3,7 @@ from hashlib import sha256
 from itertools import product as cartesian_product
 from os import makedirs, walk # Path.walk requires 3.12; simpler to ignore it
 from pathlib import Path
+import re
 from zipfile import ZipFile, ZIP_DEFLATED
 
 
@@ -93,9 +94,8 @@ def _add_other_dist_info_files(add, config):
             add(str(license_path), license_path)
 
 
-def _add_dist_info(wheel, records, config):
-    name, version = config['name'], config['version']
-    di = Path(f'{name}-{version}.dist-info')
+def _add_dist_info(wheel, records, config, nv):
+    di = Path(f'{nv}.dist-info')
     def add_dist_file(name, lines):
         handler = _add_file if isinstance(lines, Path) else _add_text
         handler(wheel, records, di / name, lines)
@@ -138,6 +138,14 @@ def _get_config(manual, kind):
     }
 
 
+def _normalized_name_and_version(name, version):
+    # https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization
+    # https://packaging.python.org/en/latest/specifications/binary-distribution-format/#escaping-and-unicode
+    name = re.sub(r"[-_.]+", "_", name).lower()
+    # TODO: version normalization
+    return f'{name}-{version}'
+
+
 def get_requires_for_build_wheel(config_settings=None):
     return ['tomli;python_version<"3.11"']
 
@@ -153,11 +161,12 @@ def build_wheel(
     config = _get_config(config_settings, 'wheel')
     name, version = config['name'], config['version']
     tags = '-'.join(config['toml']['tags'])
-    wheel_name = f'{name}-{version}-{tags}.whl'
+    nv = _normalized_name_and_version(name, version)
+    wheel_name = f'{nv}-{tags}.whl'
     wheel_path = Path(wheel_directory) / wheel_name
     records = []
     makedirs(wheel_directory, exist_ok=True)
     with ZipFile(wheel_path, 'w', compression=ZIP_DEFLATED) as wheel:
         _add_folder(wheel, records, Path('.'), Path('src'))
-        _add_dist_info(wheel, records, config)
+        _add_dist_info(wheel, records, config, nv)
     return wheel_name
