@@ -57,37 +57,39 @@ def setup(tmpdir):
     return _impl
 
 
-def _build(kind, src):
-    build.ProjectBuilder(src).build(kind, 'test_dist')
+def _build(kind, src, exclude_tests):
+    # Conform to the interface implied by expected command-line behaviour.
+    config_settings = {'exclude-tests': ''} if exclude_tests else {}
+    build.ProjectBuilder(src).build(kind, 'test_dist', config_settings)
 
 
-def _verify_sdist(src_path, config_rel_path, expected, name, version):
-    _build('sdist', src_path)
+def _verify_sdist(src_path, expected, name, version):
+    _build('sdist', src_path, True)
     with open_tar(f'test_dist/{name}-{version}.tar.gz') as t:
         actual = sorted(m.path for m in t.getmembers())
     assert expected['sdist']['files'] == actual
 
 
-def _verify_wheel(src_path, config_rel_path, expected, name, version):
-    _build('wheel', src_path)
+def _verify_wheel(src_path, expected, name, version):
+    _build('wheel', src_path, True)
     with ZipFile(f'test_dist/{name}-{version}-py3-none-any.whl') as z:
         actual = sorted(m.orig_filename for m in z.filelist)
     assert expected['wheel']['files'] == actual
 
 
 def test_self_sdist(setup):
-    expected, name, version = setup(BBBB_ROOT, '.', True)
-    _verify_sdist('.', '.', expected, name, version)
+    _verify_sdist('.', *setup(BBBB_ROOT, '.', True))
 
 
 def test_self_wheel(setup):
-    expected, name, version = setup(BBBB_ROOT, '.', True)
-    _verify_wheel('.', '.', expected, name, version)
+    _verify_wheel('.', *setup(BBBB_ROOT, '.', True))
 
 
 def test_self_wheel_via_sdist(setup):
+    # Include tests in the sdist to ensure the wheel filters them.
     expected, name, version = setup(BBBB_ROOT, '.', True)
-    _build('sdist', '.')
+    _build('sdist', '.', False)
     with open_tar(f'test_dist/{name}-{version}.tar.gz') as t:
         t.extractall(f'test_dist')
-    _verify_wheel(f'test_dist/{name}-{version}', '.', expected, name, version)
+    # TODO: verify that there *are* tests extracted
+    _verify_wheel(f'test_dist/{name}-{version}', expected, name, version)
