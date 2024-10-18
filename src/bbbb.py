@@ -10,29 +10,20 @@ BBBB_VERSION = '0.3.1'
 # TODO: generate a version label in the self-build process?
 
 
-# From PEP 517:
-# Some backends may have extra requirements for creating sdists, such as
-# version control tools. However, some frontends may prefer to make
-# intermediate sdists when producing wheels, to ensure consistency. If the
-# backend cannot produce an sdist because a dependency is missing, or for
-# another well understood reason, it should raise an exception of a specific
-# type which it makes available as UnsupportedOperation on the backend object.
-
-# When this file is used directly as a backend (via a specially crafted wheel
-# that contains only this module), that should only be because it's been
-# installed and invoked by an installer (such as Pip) for the express purpose
-# of creating a wheel from an sdist (of some other project) from PyPI.
-# In these circumstances, something has gone wrong if any attempt is made
-# at all to build an sdist.
-
-# The "main" code implements a build_sdist hook and only uses this file
-# for wheel-specific functionality.
-class UnsupportedOperation(Exception):
-    pass
+# When asked to build an sdist, set up bbbb-dev and delegate to it.
+# This won't happen when using Pip to install something, but it allows other
+# developers to specify `bbbb` in `pyproject.toml` and still build sdists.
+# Using the PEP 517 hook means that bbbb-dev won't be installed in Pip
+# build environments.
+def get_requires_for_build_sdist(config_settings=None):
+    return ['bbbb_dev']
 
 
 def build_sdist(sdist_directory, config_settings=None):
-    raise UnsupportedOperation
+    # A deferred import is used so that this happens only after
+    # bbbb-dev is known to be available, and to avoid circular import.
+    import bbbb_dev
+    return bbbb_dev.build_sdist(sdist_directory, config_settings)
 
 
 def _metadata_file(config):

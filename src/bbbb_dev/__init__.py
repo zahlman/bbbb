@@ -5,9 +5,9 @@ from pathlib import Path
 import sys
 from tarfile import open as TarFile, TarInfo
 # Build hooks
-from . import build_wheel, get_requires_for_build_wheel
+from bbbb import build_wheel, get_requires_for_build_wheel
 # Private implementation stuff
-from . import _get_config, _metadata_file, _prepare_lines
+from bbbb import _get_config, _metadata_file, _prepare_lines
 
 
 def _invoke(name, *args, **kwargs):
@@ -43,10 +43,6 @@ def _filter_sdist(config, root_folder, tar_info):
         return None
     path = Path(tar_info.name).relative_to(root_folder)
     return tar_info if _allow_path(config, path) else None
-
-
-def get_requires_for_build_sdist(config_settings=None):
-    return ['tomli;python_version<"3.11"']
 
 
 def build_sdist(sdist_directory, config_settings=None):

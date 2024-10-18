@@ -16,7 +16,7 @@ except ImportError: # 3.10 or earlier, so not in the standard library
 
 
 TEST_DIR = Path(__file__).parent
-BBBB_ROOT = TEST_DIR.parent.parent
+BBBB_ROOT = TEST_DIR.parent.parent.parent
 
 
 def _toplevel_not_src(src, names):
@@ -25,7 +25,7 @@ def _toplevel_not_src(src, names):
     src = Path(src)
     if src != BBBB_ROOT:
         return []
-    return [n for n in names if n.startswith('.')]
+    return [n for n in names if (src / n).is_dir() and n != 'src']
 
 
 def _read_config(filename, project_name, project_version):
