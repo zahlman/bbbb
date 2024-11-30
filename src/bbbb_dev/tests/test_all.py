@@ -111,9 +111,9 @@ def test_good_sdist(setup):
     _verify_sdist('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects', True))
 
 
-def test_wheel(setup):
+def test_good_wheel(setup):
     _verify_wheel('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects', True))
 
 
-def test_self_wheel_via_sdist(setup):
+def test_good_wheel_via_sdist(setup):
     _verify_wheel_via_sdist('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects', True))
