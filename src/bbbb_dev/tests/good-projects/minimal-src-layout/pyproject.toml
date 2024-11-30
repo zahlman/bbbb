@@ -1,0 +1,8 @@
+[project]
+name = "minimal-src-layout"
+version = "0.1.0"
+# Are readme and license required?
+
+[build-system]
+requires = []
+build-backend = "bbbb_dev"
