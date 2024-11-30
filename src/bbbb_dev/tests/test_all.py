@@ -23,10 +23,10 @@ TEST_DIR = Path(__file__).parent
 def _read_config(filename, project_name, project_version):
     with open(filename, 'rb') as f:
         result = load_toml(f) # let errors propagate
-    result['sdist']['files'] = sorted(result['sdist']['files'])
-    result['wheel']['files'] = sorted(result['wheel']['files'])
-    result['wheel']['sha256'] = sorted(result['wheel']['sha256'])
-    result['wheel']['size'] = sorted(result['wheel']['size'])
+    # The `result` is newly created, so we may sort in-place.
+    result['sdist']['files'].sort()
+    result['wheel']['files'].sort()
+    result['wheel']['record_lines'].sort()
     return result
 
 

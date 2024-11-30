@@ -1,45 +1,43 @@
+name = "minimal_src_layout"
+version = "0.1.0"
+
 [sdist]
 files = [
-# Root folder
-"minimal_src_layout-0.1.0",
+    # Root folder
+    "minimal_src_layout-0.1.0",
 
-# The actual source code
-# N.B. package name doesn't have to match project name
-"minimal_src_layout-0.1.0/src",
-"minimal_src_layout-0.1.0/src/minimal.py",
+    # The actual source code
+    # N.B. package name doesn't have to match project name
+    "minimal_src_layout-0.1.0/src",
+    "minimal_src_layout-0.1.0/src/minimal.py",
 
-# Standard boilerplate
-"minimal_src_layout-0.1.0/PKG-INFO",
-"minimal_src_layout-0.1.0/pyproject.toml"
+    # Standard boilerplate
+    "minimal_src_layout-0.1.0/PKG-INFO",
+    "minimal_src_layout-0.1.0/pyproject.toml"
 ]
 
 [wheel]
 record = "minimal_src_layout-0.1.0.dist-info/RECORD"
 files = [
-# The actual source code
-# N.B. this uses package name, not project name
-# N.B. zip doesn't treat folders as separate entries like tar does
-"minimal.py",
+    # The actual source code
+    # N.B. this uses package name, not project name
+    # N.B. zip doesn't treat folders as separate entries like tar does
+    "minimal.py",
 
-# This assumes PYTHONDONTWRITEBYTECODE=1
-# and that any existing cached bytecode was cleared out first.
-# Otherwise the wheel can be expected to include __pycache__
-# folders with .pyc files in them, too.
+    # This assumes PYTHONDONTWRITEBYTECODE=1
+    # and that any existing cached bytecode was cleared out first.
+    # Otherwise the wheel can be expected to include __pycache__
+    # folders with .pyc files in them, too.
 
-# Standard boilerplate
-"minimal_src_layout-0.1.0.dist-info/RECORD",
-"minimal_src_layout-0.1.0.dist-info/WHEEL",
-"minimal_src_layout-0.1.0.dist-info/METADATA"
+    # Standard boilerplate
+    "minimal_src_layout-0.1.0.dist-info/RECORD",
+    "minimal_src_layout-0.1.0.dist-info/WHEEL",
+    "minimal_src_layout-0.1.0.dist-info/METADATA"
 ]
-
-# TODO update these expected values once there are tests using them.
-[wheel.sha256]
-"minimal.py" = "xrnfEvygloHjUknRvn70UI_0UAJnFKKj8KaVrIEMjWk"
-"minimal_src_layout-0.1.0.dist-info/METADATA" = "jIgwbT_Adox8ZWmpgvABFEkhB1gxx0uGaLAB66g2z5Q"
-"minimal_src_layout-0.1.0.dist-info/WHEEL" = "BlPobMgMbFVTcDFPPJwHH3mfgxKV_FD0h9kWJ86tdQs"
-
-[wheel.size]
-# Specify these as strings because we'll read strings from the file.
-"minimal.py" = "6237"
-"minimal_src_layout-0.1.0.dist-info/METADATA" = "52"
-"minimal_src_layout-0.1.0.dist-info/WHEEL" = "81"
+# Instead of expecting the test code to parse the RECORD file, list its exact expected contents.
+record_lines = [
+    "minimal.py,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0",
+    "minimal_src_layout-0.1.0.dist-info/METADATA,sha256=TKs4M8XNJ3rs9eFd4AqxLNbn1aY7r7oY87xH7KfIxH8,62",
+    "minimal_src_layout-0.1.0.dist-info/WHEEL,sha256=vbOEPxFcsnhcwtCB1Lib-0ZXBHe1VBuCYYgnDyQW9gg,81",
+    "minimal_src_layout-0.1.0.dist-info/RECORD,,"
+]
