@@ -42,10 +42,10 @@ def _read_config(filename, project_name, project_version):
 def setup(tmpdir):
     def _impl(project_path, config_rel_path, src_only):
         ignore = _toplevel_not_src if src_only else None
-        copytree(project_path, tmpdir, ignore=ignore, dirs_exist_ok=True)
+        copytree(project_path, tmpdir / 'project', ignore=ignore, dirs_exist_ok=True)
         chdir(tmpdir)
         # Determine project name and version for use in tests.
-        with open('pyproject.toml', 'rb') as f:
+        with open('project/pyproject.toml', 'rb') as f:
             project = load_toml(f)['project']
         name, version = project['name'], project['version']
         # Determine expectations for resulting sdist and wheel.
