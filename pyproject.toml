@@ -9,8 +9,12 @@ classifiers = [
     "Development Status :: 1 - Planning",
     "Programming Language :: Python :: 3"
 ]
-dependencies = []
+dependencies = [ "tomli >= 1.1.0 ; python_version < '3.11'" ]
 license = {file = "LICENSE.txt"}
+
+[project.optional-dependencies]
+front-end = [ "build" ]
+test = [ "build", "pytest" ]
 
 [[project.authors]]
 name = "Karl Knechtel"
@@ -22,7 +26,7 @@ changelog = "https://github.com/zahlman/bbbb/blob/master/changelog.md"
 homepage = "https://github.com/zahlman/bbbb"
 
 [build-system]
-requires = []
+requires = [ "tomli >= 1.1.0 ; python_version < '3.11'" ]
 build-backend = "bbbb_dev"
 backend-path = ["src"]
 
