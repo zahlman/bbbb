@@ -6,9 +6,7 @@ def _filter_implementation(path, exclude_tests):
         return False
     if path.parts == ('sdist.py',): # self-exclusion
         return False
-    # sdists and wheels created either normally or in tests.
-    if parts[0] in ('dist', 'test_dist'):
-        return False
+    # A command-line option allows for excluding tests from the sdist.
     if 'tests' in parts and exclude_tests:
         return False
     return True
