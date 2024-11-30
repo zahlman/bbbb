@@ -19,15 +19,6 @@ TEST_DIR = Path(__file__).parent
 BBBB_ROOT = TEST_DIR.parent.parent.parent
 
 
-def _toplevel_not_src(src, names):
-    # a filter for copytree.
-    # Only copy the `src` folder when doing the self-test.
-    src = Path(src)
-    if src != BBBB_ROOT:
-        return []
-    return [n for n in names if (src / n).is_dir() and n != 'src']
-
-
 def _read_config(filename, project_name, project_version):
     with open(filename, 'rb') as f:
         result = load_toml(f) # let errors propagate
@@ -40,9 +31,8 @@ def _read_config(filename, project_name, project_version):
 
 @pytest.fixture
 def setup(tmpdir):
-    def _impl(project_path, config_rel_path, src_only):
-        ignore = _toplevel_not_src if src_only else None
-        copytree(project_path, tmpdir / 'project', ignore=ignore, dirs_exist_ok=True)
+    def _impl(project_path, config_rel_path):
+        copytree(project_path, tmpdir / 'project', dirs_exist_ok=True)
         chdir(tmpdir)
         # Determine project name and version for use in tests.
         with open('project/pyproject.toml', 'rb') as f:
@@ -108,12 +98,12 @@ def _verify_wheel_via_sdist(src_path, expected, name, version):
 
 
 def test_good_sdist(setup):
-    _verify_sdist('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects', True))
+    _verify_sdist('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects'))
 
 
 def test_good_wheel(setup):
-    _verify_wheel('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects', True))
+    _verify_wheel('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects'))
 
 
 def test_good_wheel_via_sdist(setup):
-    _verify_wheel_via_sdist('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects', True))
+    _verify_wheel_via_sdist('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects'))
