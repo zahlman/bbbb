@@ -98,19 +98,22 @@ def _verify_wheel(src_path, expected, name, version):
     assert expected['wheel']['files'] == actual
 
 
-def test_self_sdist(setup):
-    _verify_sdist('.', *setup(BBBB_ROOT, '.', True))
-
-
-def test_self_wheel(setup):
-    _verify_wheel('.', *setup(BBBB_ROOT, '.', True))
-
-
-def test_self_wheel_via_sdist(setup):
+def _verify_wheel_via_sdist(src_path, expected, name, version):
     # Include tests in the sdist to ensure the wheel filters them.
-    expected, name, version = setup(BBBB_ROOT, '.', True)
-    _build('sdist', '.', False)
+    _build('sdist', src_path, False)
     with _find_sdist() as t:
         t.extractall(f'test_dist')
     # TODO: verify that there *are* tests extracted
     _verify_wheel(_find_sdist_folder(), expected, name, version)
+
+
+def test_good_sdist(setup):
+    _verify_sdist('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects', True))
+
+
+def test_wheel(setup):
+    _verify_wheel('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects', True))
+
+
+def test_self_wheel_via_sdist(setup):
+    _verify_wheel_via_sdist('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects', True))
