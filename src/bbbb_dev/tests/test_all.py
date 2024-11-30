@@ -6,7 +6,9 @@ from tarfile import open as open_tar
 from zipfile import ZipFile
 
 # third-party
-import build, pytest
+import build
+from pytest import fixture, mark, param
+parametrize = mark.parametrize
 
 
 try:
@@ -16,7 +18,6 @@ except ImportError: # 3.10 or earlier, so not in the standard library
 
 
 TEST_DIR = Path(__file__).parent
-BBBB_ROOT = TEST_DIR.parent.parent.parent
 
 
 def _read_config(filename, project_name, project_version):
@@ -29,7 +30,7 @@ def _read_config(filename, project_name, project_version):
     return result
 
 
-@pytest.fixture
+@fixture
 def setup(tmpdir):
     def _impl(project_folder, project_name):
         src_path = TEST_DIR / project_folder / project_name
@@ -98,14 +99,11 @@ def _verify_wheel_via_sdist(src_path, expected, name, version):
     _verify_wheel(_find_sdist_folder(), expected, name, version)
 
 
-def test_good_sdist(setup):
-    _verify_sdist('project', *setup('good-projects', 'minimal-src-layout'))
-
-
-def test_good_wheel(setup):
-    _verify_wheel('project', *setup('good-projects', 'minimal-src-layout'))
-
-
-def test_good_wheel_via_sdist(setup):
-    expected, name, version = setup('good-projects', 'minimal-src-layout')
-    _verify_wheel_via_sdist('project', expected, name, version)
+_verifiers = (
+    param(_verify_sdist, id='sdist'),
+    param(_verify_wheel, id='wheel'),
+    param(_verify_wheel_via_sdist, id='wheel via sdist')
+)
+@parametrize('verifier', _verifiers)
+def test_good(setup, verifier):
+    verifier('project', *setup('good-projects', 'minimal-src-layout'))
