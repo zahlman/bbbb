@@ -31,15 +31,16 @@ def _read_config(filename, project_name, project_version):
 
 @pytest.fixture
 def setup(tmpdir):
-    def _impl(project_path, config_rel_path):
-        copytree(project_path, tmpdir / 'project', dirs_exist_ok=True)
+    def _impl(project_folder, project_name):
+        src_path = TEST_DIR / project_folder / project_name
+        toml_path = TEST_DIR / project_folder / f'{project_name}.toml'
+        copytree(src_path, tmpdir / 'project', dirs_exist_ok=True)
         chdir(tmpdir)
         # Determine project name and version for use in tests.
         with open('project/pyproject.toml', 'rb') as f:
             project = load_toml(f)['project']
         name, version = project['name'], project['version']
         # Determine expectations for resulting sdist and wheel.
-        toml_path = TEST_DIR / config_rel_path / f'{name}.toml'
         return _read_config(toml_path, name, version), name, version
     return _impl
 
@@ -98,12 +99,13 @@ def _verify_wheel_via_sdist(src_path, expected, name, version):
 
 
 def test_good_sdist(setup):
-    _verify_sdist('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects'))
+    _verify_sdist('project', *setup('good-projects', 'minimal-src-layout'))
 
 
 def test_good_wheel(setup):
-    _verify_wheel('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects'))
+    _verify_wheel('project', *setup('good-projects', 'minimal-src-layout'))
 
 
 def test_good_wheel_via_sdist(setup):
-    _verify_wheel_via_sdist('project', *setup(TEST_DIR / 'good-projects' / 'minimal-src-layout', 'good-projects'))
+    expected, name, version = setup('good-projects', 'minimal-src-layout')
+    _verify_wheel_via_sdist('project', expected, name, version)
