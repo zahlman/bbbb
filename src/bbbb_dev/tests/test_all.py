@@ -20,7 +20,7 @@ except ImportError: # 3.10 or earlier, so not in the standard library
 TEST_DIR = Path(__file__).parent
 
 
-def _read_config(filename, project_name, project_version):
+def _read_config(filename):
     with open(filename, 'rb') as f:
         result = load_toml(f) # let errors propagate
     # The `result` is newly created, so we may sort in-place.
@@ -37,12 +37,8 @@ def setup(tmpdir):
         toml_path = TEST_DIR / project_folder / f'{project_name}.toml'
         copytree(src_path, tmpdir / 'project', dirs_exist_ok=True)
         chdir(tmpdir)
-        # Determine project name and version for use in tests.
-        with open('project/pyproject.toml', 'rb') as f:
-            project = load_toml(f)['project']
-        name, version = project['name'], project['version']
         # Determine expectations for resulting sdist and wheel.
-        return _read_config(toml_path, name, version), name, version
+        return _read_config(toml_path)
     return _impl
 
 
@@ -76,27 +72,27 @@ def _find_sdist_folder():
     return dirname
 
 
-def _verify_sdist(src_path, expected, name, version):
+def _verify_sdist(src_path, expected):
     _build('sdist', src_path, True)
     with _find_sdist() as t:
         actual = sorted(m.path for m in t.getmembers())
     assert expected['sdist']['files'] == actual
 
 
-def _verify_wheel(src_path, expected, name, version):
+def _verify_wheel(src_path, expected):
     _build('wheel', src_path, True)
     with _find_wheel() as z:
         actual = sorted(m.orig_filename for m in z.filelist)
     assert expected['wheel']['files'] == actual
 
 
-def _verify_wheel_via_sdist(src_path, expected, name, version):
+def _verify_wheel_via_sdist(src_path, expected):
     # Include tests in the sdist to ensure the wheel filters them.
     _build('sdist', src_path, False)
     with _find_sdist() as t:
         t.extractall(f'test_dist')
     # TODO: verify that there *are* tests extracted
-    _verify_wheel(_find_sdist_folder(), expected, name, version)
+    _verify_wheel(_find_sdist_folder(), expected)
 
 
 _verifiers = (
@@ -106,4 +102,4 @@ _verifiers = (
 )
 @parametrize('verifier', _verifiers)
 def test_good(setup, verifier):
-    verifier('project', *setup('good-projects', 'minimal-src-layout'))
+    verifier('project', setup('good-projects', 'minimal-src-layout'))
